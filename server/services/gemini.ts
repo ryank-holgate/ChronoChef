@@ -41,7 +41,7 @@ Guidelines:
     const userPrompt = `Please create personalized recipes for someone who has ${cookingTime} to cook, has these ingredients: ${ingredients}, and is in the mood for: ${mood}`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash",
       config: {
         systemInstruction: systemPrompt,
         responseMimeType: "application/json",
