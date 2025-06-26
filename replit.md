@@ -102,6 +102,9 @@ Changelog:
 - June 26, 2025. Switched from Gemini 2.5 Pro to 2.5 Flash for better rate limits
 - June 26, 2025. Fixed dropdown text visibility issues in select components
 - June 26, 2025. Added "Surprise Me!" feature for instant chef's choice recipes
+- June 26, 2025. Implemented sophisticated dark theme with glassmorphism effects
+- June 26, 2025. Fixed button text visibility issues in dark theme
+- June 26, 2025. Created comprehensive README.md documentation
 ```
 
 ## User Preferences
