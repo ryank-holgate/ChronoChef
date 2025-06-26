@@ -8,6 +8,18 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
 });
 
+// Saved recipes table
+export const savedRecipes = pgTable("saved_recipes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  recipeName: text("recipe_name").notNull(),
+  recipeDescription: text("recipe_description").notNull(),
+  cookTime: text("cook_time").notNull(),
+  ingredients: text("ingredients").array().notNull(),
+  instructions: text("instructions").array().notNull(),
+  createdAt: text("created_at").notNull().default(new Date().toISOString()),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -15,6 +27,15 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+// Saved recipe schemas
+export const insertSavedRecipeSchema = createInsertSchema(savedRecipes).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSavedRecipe = z.infer<typeof insertSavedRecipeSchema>;
+export type SavedRecipe = typeof savedRecipes.$inferSelect;
 
 // Recipe generation request schema
 export const recipeRequestSchema = z.object({

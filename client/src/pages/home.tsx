@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -9,9 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { recipeRequestSchema, type RecipeRequest, type RecipeResponse, type Recipe } from "@shared/schema";
-import { Clock, Carrot, Heart, Utensils, Search, Plus, Loader2 } from "lucide-react";
+import { Clock, Carrot, Heart, Utensils, Search, Plus, Loader2, BookOpen } from "lucide-react";
 
 export default function Home() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -54,6 +55,37 @@ export default function Home() {
     setShowResults(false);
     form.reset();
   };
+
+  const saveRecipeMutation = useMutation({
+    mutationFn: async (recipe: Recipe) => {
+      // For demo purposes, using userId = 1. In a real app, this would come from authentication
+      const recipeData = {
+        userId: 1,
+        recipeName: recipe.name,
+        recipeDescription: recipe.description,
+        cookTime: recipe.cookTime,
+        ingredients: recipe.ingredients,
+        instructions: recipe.instructions,
+      };
+      const response = await apiRequest("POST", "/api/recipes/save", recipeData);
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Recipe Saved!",
+        description: "Your recipe has been saved to your collection.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/recipes/saved"] });
+    },
+    onError: (error) => {
+      console.error("Save recipe failed:", error);
+      toast({
+        title: "Save Failed",
+        description: "Could not save the recipe. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   if (showResults) {
     return (
@@ -121,10 +153,16 @@ export default function Home() {
                     </div>
                     
                     <div className="flex items-center justify-between">
-                      <button className="text-primary hover:text-accent transition-colors">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => saveRecipeMutation.mutate(recipe)}
+                        disabled={saveRecipeMutation.isPending}
+                        className="text-primary hover:text-accent transition-colors p-0 h-auto"
+                      >
                         <Heart className="mr-1 h-4 w-4 inline" />
-                        Save Recipe
-                      </button>
+                        {saveRecipeMutation.isPending ? "Saving..." : "Save Recipe"}
+                      </Button>
                       <button className="text-secondary hover:text-primary transition-colors">
                         <Search className="mr-1 h-4 w-4 inline" />
                         Share
@@ -165,13 +203,19 @@ export default function Home() {
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
                 <Utensils className="text-white text-lg" />
               </div>
               <h1 className="text-2xl font-bold text-dark-slate">ChronoChef</h1>
             </div>
+            <Link href="/saved">
+              <Button variant="ghost" className="text-dark-slate hover:text-primary">
+                <BookOpen className="mr-2 h-4 w-4" />
+                My Recipes
+              </Button>
+            </Link>
           </div>
         </div>
       </header>

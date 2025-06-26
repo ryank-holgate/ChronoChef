@@ -1,8 +1,8 @@
-# Recipe Generator Application
+# ChronoChef - Recipe Generator Application
 
 ## Overview
 
-This is a full-stack recipe generator application that uses AI to create personalized recipes based on user preferences. The application features a React frontend with shadcn/ui components and an Express.js backend integrated with Google's Gemini AI for recipe generation.
+ChronoChef is a full-stack recipe generator application that uses AI to create personalized recipes based on user preferences. The application features a React frontend with shadcn/ui components and an Express.js backend integrated with Google's Gemini AI for recipe generation. Users can save their favorite recipes to a PostgreSQL database and manage their personal recipe collection.
 
 ## System Architecture
 
@@ -18,9 +18,9 @@ This is a full-stack recipe generator application that uses AI to create persona
 ### Backend Architecture
 - **Runtime**: Node.js 20 with Express.js
 - **Language**: TypeScript with ES modules
-- **Database**: PostgreSQL with Drizzle ORM (configured but not actively used)
-- **AI Integration**: Google Gemini AI for recipe generation
-- **Session Management**: In-memory storage (development setup)
+- **Database**: PostgreSQL with Drizzle ORM (fully integrated)
+- **AI Integration**: Google Gemini 2.5 Flash for recipe generation
+- **Storage**: Database-backed recipe persistence with user collections
 - **Development**: tsx for TypeScript execution in development
 
 ### Data Flow
@@ -30,33 +30,42 @@ This is a full-stack recipe generator application that uses AI to create persona
 4. Backend validates request and calls Gemini AI service
 5. AI generates 1-3 personalized recipes based on user input
 6. Recipes returned to frontend and displayed in cards
+7. Users can save favorite recipes to PostgreSQL database
+8. Saved recipes are accessible through dedicated collection page
 
 ## Key Components
 
 ### Frontend Components
-- **Home Page**: Main recipe generation interface with form inputs
+- **Home Page**: Main recipe generation interface with form inputs and navigation
 - **Recipe Form**: Collects cooking time, ingredients, and mood preferences
-- **Recipe Display**: Shows generated recipes with ingredients and instructions
+- **Recipe Display**: Shows generated recipes with save functionality
+- **Saved Recipes Page**: Personal collection management with delete options
+- **Navigation**: Seamless routing between recipe generation and saved collections
 - **Toast Notifications**: User feedback for success/error states
 - **UI Components**: Comprehensive shadcn/ui component library
 
 ### Backend Services
-- **Recipe Generation**: `/api/recipes/generate` endpoint
-- **Gemini AI Service**: Handles AI communication and response parsing
+- **Recipe Generation**: `/api/recipes/generate` endpoint with Gemini AI integration
+- **Recipe Persistence**: `/api/recipes/save` endpoint for saving favorites
+- **Recipe Retrieval**: `/api/recipes/saved/:userId` endpoint for user collections
+- **Recipe Management**: `/api/recipes/saved/:id/:userId` DELETE endpoint
+- **Database Layer**: Drizzle ORM with PostgreSQL integration
 - **Schema Validation**: Shared Zod schemas for type safety
 - **Error Handling**: Comprehensive error handling with user-friendly messages
 
 ### Data Models
 - **Recipe Request**: Cooking time, ingredients list, mood/style preferences
 - **Recipe Response**: Array of recipes with name, description, cook time, ingredients, and instructions
-- **User Schema**: Basic user model (configured but not implemented)
+- **User Schema**: Basic user model for authentication (configured)
+- **Saved Recipe Schema**: Complete recipe data with user association and timestamps
+- **Database Relations**: User-to-recipes relationship with proper foreign keys
 
 ## External Dependencies
 
 ### AI Integration
-- **Google Gemini AI**: Recipe generation using Gemini 2.5 Pro model
+- **Google Gemini AI**: Recipe generation using Gemini 2.5 Flash model (optimized for speed and rate limits)
 - **Structured Output**: JSON schema validation for consistent recipe format
-- **API Key**: Required environment variable for Gemini service
+- **API Key**: Configured via Replit Secrets for secure access
 
 ### Development Tools
 - **Replit Integration**: Configured for Replit development environment
@@ -85,7 +94,11 @@ This is a full-stack recipe generator application that uses AI to create persona
 
 ```
 Changelog:
-- June 26, 2025. Initial setup
+- June 26, 2025. Initial setup with recipe generation
+- June 26, 2025. Added PostgreSQL database integration
+- June 26, 2025. Implemented recipe saving and collection management
+- June 26, 2025. Added saved recipes page with CRUD operations
+- June 26, 2025. Switched from Gemini 2.5 Pro to 2.5 Flash for better rate limits
 ```
 
 ## User Preferences
@@ -97,9 +110,10 @@ Preferred communication style: Simple, everyday language.
 ## Technical Notes
 
 ### Database Integration
-- Drizzle ORM configured with PostgreSQL support
-- User authentication schema defined but not implemented
-- Ready for future features like recipe saving and user accounts
+- Drizzle ORM fully integrated with PostgreSQL
+- User schema configured for future authentication features
+- Saved recipes table with user relationships implemented
+- Complete CRUD operations for recipe persistence
 
 ### AI Service Architecture
 - Structured prompts for consistent recipe generation
