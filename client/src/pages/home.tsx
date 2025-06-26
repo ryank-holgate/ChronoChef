@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { recipeRequestSchema, type RecipeRequest, type RecipeResponse, type Recipe } from "@shared/schema";
-import { Clock, Carrot, Heart, Utensils, Search, Plus, Loader2, BookOpen } from "lucide-react";
+import { Clock, Carrot, Heart, Utensils, Search, Plus, Loader2, BookOpen, Sparkles } from "lucide-react";
 
 export default function Home() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -41,6 +41,30 @@ export default function Home() {
       console.error("Recipe generation failed:", error);
       toast({
         title: "Recipe Generation Failed",
+        description: error instanceof Error ? error.message : "Please try again in a moment.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const surpriseMeMutation = useMutation({
+    mutationFn: async () => {
+      const surpriseData: RecipeRequest = {
+        cookingTime: "45 minutes",
+        ingredients: "chef's choice of seasonal and fresh ingredients",
+        mood: "adventurous and creative"
+      };
+      const response = await apiRequest("POST", "/api/recipes/generate", surpriseData);
+      return await response.json() as RecipeResponse;
+    },
+    onSuccess: (data) => {
+      setRecipes(data.recipes);
+      setShowResults(true);
+    },
+    onError: (error) => {
+      console.error("Surprise recipe generation failed:", error);
+      toast({
+        title: "Surprise Recipe Failed",
         description: error instanceof Error ? error.message : "Please try again in a moment.",
         variant: "destructive",
       });
@@ -229,7 +253,7 @@ export default function Home() {
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Tell us how much time you have, what ingredients you've got, and how you're feeling. 
-              We'll create personalized recipes just for you.
+              We'll create personalized recipes just for you. Or click "Surprise Me!" for an amazing chef's choice recipe.
             </p>
           </div>
         </section>
@@ -322,10 +346,10 @@ export default function Home() {
                 />
               </div>
 
-              <div className="flex justify-center pt-4">
+              <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
                 <Button
                   type="submit"
-                  disabled={generateRecipesMutation.isPending}
+                  disabled={generateRecipesMutation.isPending || surpriseMeMutation.isPending}
                   className="bg-gradient-to-r from-primary to-accent text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {generateRecipesMutation.isPending ? (
@@ -337,6 +361,32 @@ export default function Home() {
                     <>
                       <Search className="mr-2 h-4 w-4" />
                       Find My Recipes
+                    </>
+                  )}
+                </Button>
+                
+                <div className="flex items-center">
+                  <div className="flex-1 border-t border-gray-300 sm:hidden"></div>
+                  <span className="px-4 text-gray-500 text-sm font-medium sm:hidden">OR</span>
+                  <div className="flex-1 border-t border-gray-300 sm:hidden"></div>
+                  <span className="hidden sm:inline px-4 text-gray-500 text-sm font-medium">OR</span>
+                </div>
+                
+                <Button
+                  type="button"
+                  onClick={() => surpriseMeMutation.mutate()}
+                  disabled={generateRecipesMutation.isPending || surpriseMeMutation.isPending}
+                  className="bg-gradient-to-r from-secondary to-primary text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {surpriseMeMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating Surprise...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Surprise Me!
                     </>
                   )}
                 </Button>

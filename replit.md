@@ -36,8 +36,9 @@ ChronoChef is a full-stack recipe generator application that uses AI to create p
 ## Key Components
 
 ### Frontend Components
-- **Home Page**: Main recipe generation interface with form inputs and navigation
+- **Home Page**: Main recipe generation interface with form inputs, navigation, and surprise feature
 - **Recipe Form**: Collects cooking time, ingredients, and mood preferences
+- **Surprise Me Feature**: One-click recipe generation with chef's choice ingredients
 - **Recipe Display**: Shows generated recipes with save functionality
 - **Saved Recipes Page**: Personal collection management with delete options
 - **Navigation**: Seamless routing between recipe generation and saved collections
@@ -99,6 +100,8 @@ Changelog:
 - June 26, 2025. Implemented recipe saving and collection management
 - June 26, 2025. Added saved recipes page with CRUD operations
 - June 26, 2025. Switched from Gemini 2.5 Pro to 2.5 Flash for better rate limits
+- June 26, 2025. Fixed dropdown text visibility issues in select components
+- June 26, 2025. Added "Surprise Me!" feature for instant chef's choice recipes
 ```
 
 ## User Preferences
