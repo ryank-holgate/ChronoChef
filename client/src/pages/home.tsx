@@ -199,7 +199,7 @@ export default function Home() {
           </div>
           
           <div className="text-center mt-8">
-            <Button onClick={handleFindMore} className="btn-secondary text-secondary-foreground">
+            <Button onClick={handleFindMore} className="btn-secondary text-white">
               <Plus className="mr-2 h-4 w-4" />
               Find More Recipes
             </Button>
@@ -350,7 +350,7 @@ export default function Home() {
                 <Button
                   type="submit"
                   disabled={generateRecipesMutation.isPending || surpriseMeMutation.isPending}
-                  className="btn-primary text-primary-foreground px-8 py-4 rounded-xl font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-primary text-white px-8 py-4 rounded-xl font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {generateRecipesMutation.isPending ? (
                     <>
@@ -376,7 +376,7 @@ export default function Home() {
                   type="button"
                   onClick={() => surpriseMeMutation.mutate()}
                   disabled={generateRecipesMutation.isPending || surpriseMeMutation.isPending}
-                  className="btn-secondary text-secondary-foreground px-8 py-4 rounded-xl font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-secondary text-white px-8 py-4 rounded-xl font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {surpriseMeMutation.isPending ? (
                     <>

@@ -100,7 +100,7 @@ export default function SavedRecipes() {
             <h3 className="text-xl font-semibold text-foreground mb-2">No saved recipes yet</h3>
             <p className="text-muted-foreground mb-6">Start by generating some recipes and saving your favorites!</p>
             <Link href="/">
-              <Button className="btn-primary text-primary-foreground">
+              <Button className="btn-primary text-white">
                 <Utensils className="mr-2 h-4 w-4" />
                 Generate Recipes
               </Button>
