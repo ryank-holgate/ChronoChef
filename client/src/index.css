@@ -98,4 +98,14 @@
   .bg-light-gray {
     background-color: hsl(var(--light-gray));
   }
+  
+  /* Fix select dropdown text visibility */
+  [data-radix-select-item] {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  [data-radix-select-item]:focus {
+    background-color: hsl(var(--accent)) !important;
+    color: hsl(var(--foreground)) !important;
+  }
 }
