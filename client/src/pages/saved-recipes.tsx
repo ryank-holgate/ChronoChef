@@ -3,19 +3,20 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
 import { queryClient } from "@/lib/queryClient";
 import { type SavedRecipe } from "@shared/schema";
 import { Clock, Utensils, Trash2, ArrowLeft, BookOpen } from "lucide-react";
 
 export default function SavedRecipes() {
   const { toast } = useToast();
-  const { user } = useAuth();
+
+  // For demo purposes, using userId = 1. In a real app, this would come from authentication
+  const userId = 1;
 
   const { data: savedRecipes = [], isLoading } = useQuery({
-    queryKey: ["/api/recipes/saved"],
+    queryKey: ["/api/recipes/saved", userId],
     queryFn: async () => {
-      const response = await fetch("/api/recipes/saved");
+      const response = await fetch(`/api/recipes/saved/${userId}`);
       if (!response.ok) {
         throw new Error("Failed to fetch saved recipes");
       }
@@ -25,7 +26,7 @@ export default function SavedRecipes() {
 
   const deleteRecipeMutation = useMutation({
     mutationFn: async (recipeId: number) => {
-      const response = await fetch(`/api/recipes/saved/${recipeId}`, {
+      const response = await fetch(`/api/recipes/saved/${recipeId}/${userId}`, {
         method: "DELETE",
       });
       if (!response.ok) {
@@ -38,7 +39,7 @@ export default function SavedRecipes() {
         title: "Recipe Deleted",
         description: "The recipe has been removed from your collection.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/recipes/saved"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/recipes/saved", userId] });
     },
     onError: (error) => {
       console.error("Delete recipe failed:", error);
@@ -159,7 +160,7 @@ export default function SavedRecipes() {
                     </div>
                     
                     <div className="text-xs text-muted-foreground/70 mt-4">
-                      Saved on {recipe.createdAt ? new Date(recipe.createdAt).toLocaleDateString() : 'Unknown'}
+                      Saved on {new Date(recipe.createdAt).toLocaleDateString()}
                     </div>
                   </div>
                 </div>

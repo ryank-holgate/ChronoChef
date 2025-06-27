@@ -1,19 +1,12 @@
-import { 
-  users, 
-  savedRecipes, 
-  type User, 
-  type InsertUser, 
-  type SavedRecipe, 
-  type InsertSavedRecipe 
-} from "@shared/schema";
+import { users, savedRecipes, type User, type InsertUser, type SavedRecipe, type InsertSavedRecipe } from "@shared/schema";
 
-// Interface for storage operations
+// modify the interface with any CRUD methods
+// you might need
+
 export interface IStorage {
-  // User operations
   getUser(id: number): Promise<User | undefined>;
-  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  // Recipe operations
   saveRecipe(recipe: InsertSavedRecipe): Promise<SavedRecipe>;
   getSavedRecipes(userId: number): Promise<SavedRecipe[]>;
   deleteSavedRecipe(id: number, userId: number): Promise<void>;
@@ -23,30 +16,31 @@ import { db } from "./db";
 import { eq, and } from "drizzle-orm";
 
 export class DatabaseStorage implements IStorage {
-  // User operations
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    return user || undefined;
   }
 
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user;
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
-  async createUser(userData: InsertUser): Promise<User> {
+  async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
-      .values(userData)
+      .values(insertUser)
       .returning();
     return user;
   }
 
-  // Recipe operations
   async saveRecipe(recipe: InsertSavedRecipe): Promise<SavedRecipe> {
     const [savedRecipe] = await db
       .insert(savedRecipes)
-      .values(recipe)
+      .values({
+        ...recipe,
+        createdAt: new Date().toISOString(),
+      })
       .returning();
     return savedRecipe;
   }

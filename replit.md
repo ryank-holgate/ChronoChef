@@ -105,8 +105,6 @@ Changelog:
 - June 26, 2025. Implemented sophisticated dark theme with glassmorphism effects
 - June 26, 2025. Fixed button text visibility issues in dark theme
 - June 26, 2025. Created comprehensive README.md documentation
-- June 27, 2025. Integrated Replit Auth for user authentication and personalized recipe collections
-- June 27, 2025. Replaced Replit Auth with simple name/email authentication system for broader user access
 ```
 
 ## User Preferences

@@ -1,35 +1,11 @@
-import { 
-  pgTable, 
-  text, 
-  serial, 
-  integer, 
-  boolean, 
-  json, 
-  varchar,
-  timestamp,
-  jsonb,
-  index 
-} from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Session storage table (required for Replit Auth)
-export const sessions = pgTable(
-  "sessions",
-  {
-    sid: varchar("sid").primaryKey(),
-    sess: jsonb("sess").notNull(),
-    expire: timestamp("expire").notNull(),
-  },
-  (table) => [index("IDX_session_expire").on(table.expire)],
-);
-
-// User storage table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
-  email: varchar("email", { length: 255 }).unique().notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
 });
 
 // Saved recipes table
@@ -41,12 +17,12 @@ export const savedRecipes = pgTable("saved_recipes", {
   cookTime: text("cook_time").notNull(),
   ingredients: text("ingredients").array().notNull(),
   instructions: text("instructions").array().notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: text("created_at").notNull().default(new Date().toISOString()),
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  createdAt: true,
+export const insertUserSchema = createInsertSchema(users).pick({
+  username: true,
+  password: true,
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
