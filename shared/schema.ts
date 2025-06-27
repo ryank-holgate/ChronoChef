@@ -90,10 +90,7 @@ export type RecipeResponse = z.infer<typeof recipeResponseSchema>;
 // User-added recipe schema
 export const userRecipeSchema = z.object({
   recipeName: z.string().min(1, "Recipe name is required"),
-  recipeDescription: z.string().min(10, "Please provide a description (min 10 characters)"),
-  cookTime: z.string().min(1, "Cook time is required"),
-  ingredients: z.string().min(10, "Please provide ingredients (min 10 characters)"),
-  instructions: z.string().min(20, "Please provide instructions (min 20 characters)"),
+  recipeContent: z.string().min(50, "Please paste your complete recipe (min 50 characters)"),
   category: z.enum(["appetizers", "main-entrees", "desserts", "bread", "soups", "salads", "beverages", "snacks"]).default("main-entrees"),
 });
 

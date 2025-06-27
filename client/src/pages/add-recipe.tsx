@@ -49,10 +49,7 @@ export default function AddRecipe() {
     resolver: zodResolver(userRecipeSchema),
     defaultValues: {
       recipeName: "",
-      recipeDescription: "",
-      cookTime: "",
-      ingredients: "",
-      instructions: "",
+      recipeContent: "",
       category: "main-entrees",
     },
   });
@@ -138,7 +135,7 @@ export default function AddRecipe() {
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Share your favorite recipes and organize them in your personal collection. 
-            Copy and paste from anywhere or type your recipe details below.
+            Simply copy and paste your complete recipe from anywhere - no need to separate ingredients and instructions.
           </p>
         </section>
 
@@ -154,48 +151,24 @@ export default function AddRecipe() {
           <CardContent className="p-8">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  {/* Recipe Name */}
-                  <FormField
-                    control={form.control}
-                    name="recipeName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-foreground font-medium">Recipe Name</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g., Grandma's Chocolate Chip Cookies"
-                            className="input-field"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Cook Time */}
-                  <FormField
-                    control={form.control}
-                    name="cookTime"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center text-foreground font-medium">
-                          <Clock className="mr-2 h-4 w-4 text-primary" />
-                          Cook Time
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g., 30 minutes, 1 hour 15 minutes"
-                            className="input-field"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                {/* Recipe Name */}
+                <FormField
+                  control={form.control}
+                  name="recipeName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-foreground font-medium">Recipe Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., Grandma's Chocolate Chip Cookies"
+                          className="input-field"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 {/* Category */}
                 <FormField
@@ -223,61 +196,43 @@ export default function AddRecipe() {
                   )}
                 />
 
-                {/* Description */}
+                {/* Recipe Content */}
                 <FormField
                   control={form.control}
-                  name="recipeDescription"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-foreground font-medium">Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Describe your recipe, what makes it special, any tips or background..."
-                          className="input-field min-h-[100px] resize-none"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Ingredients */}
-                <FormField
-                  control={form.control}
-                  name="ingredients"
+                  name="recipeContent"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-foreground font-medium">
-                        Ingredients
-                        <span className="text-sm text-muted-foreground ml-2">(one per line)</span>
+                        Complete Recipe
+                        <span className="text-sm text-muted-foreground ml-2">(copy and paste your entire recipe here)</span>
                       </FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder={`2 cups all-purpose flour\n1 cup butter, softened\n3/4 cup brown sugar\n1 tsp vanilla extract\n2 large eggs\n1 cup chocolate chips`}
-                          className="input-field min-h-[150px] font-mono text-sm"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                          placeholder={`Paste your complete recipe here, including ingredients, instructions, cooking time, and any notes.
 
-                {/* Instructions */}
-                <FormField
-                  control={form.control}
-                  name="instructions"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-foreground font-medium">
-                        Instructions
-                        <span className="text-sm text-muted-foreground ml-2">(one step per line)</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder={`Preheat oven to 375°F (190°C)\nCream butter and brown sugar until light and fluffy\nBeat in eggs and vanilla extract\nGradually mix in flour until just combined\nFold in chocolate chips\nDrop spoonfuls onto baking sheet\nBake for 9-11 minutes until golden brown`}
-                          className="input-field min-h-[200px] font-mono text-sm"
+Example:
+Chocolate Chip Cookies
+
+Ingredients:
+- 2 cups all-purpose flour
+- 1 cup butter, softened
+- 3/4 cup brown sugar
+- 1 tsp vanilla extract
+- 2 large eggs
+- 1 cup chocolate chips
+
+Instructions:
+1. Preheat oven to 375°F (190°C)
+2. Cream butter and brown sugar until light and fluffy
+3. Beat in eggs and vanilla extract
+4. Gradually mix in flour until just combined
+5. Fold in chocolate chips
+6. Drop spoonfuls onto baking sheet
+7. Bake for 9-11 minutes until golden brown
+
+Cooking Time: 25 minutes
+Notes: Store in airtight container for up to one week.`}
+                          className="input-field min-h-[300px] font-mono text-sm resize-y"
                           {...field}
                         />
                       </FormControl>

@@ -98,19 +98,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add user recipe endpoint (requires auth)
   app.post("/api/recipes/add", requireAuth, async (req: any, res) => {
     try {
-      const { recipeName, recipeDescription, cookTime, ingredients, instructions, category } = req.body;
-      
-      // Parse ingredients and instructions from text to arrays
-      const ingredientsList = ingredients.split('\n').filter((item: string) => item.trim().length > 0);
-      const instructionsList = instructions.split('\n').filter((item: string) => item.trim().length > 0);
+      const { recipeName, recipeContent, category } = req.body;
       
       const recipeData = {
         userId: req.user.id,
         recipeName,
-        recipeDescription,
-        cookTime,
-        ingredients: ingredientsList,
-        instructions: instructionsList,
+        recipeDescription: recipeContent, // Store the full recipe content as description
+        cookTime: "User specified", // Default value since not collected separately
+        ingredients: [], // Empty array since content is stored in description
+        instructions: [], // Empty array since content is stored in description
         category: category || "main-entrees",
         source: "user-added"
       };
