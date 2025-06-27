@@ -237,11 +237,21 @@ export default function Home() {
             ))}
           </div>
           
-          <div className="text-center mt-8">
+          <div className="text-center mt-8 space-y-4">
             <Button onClick={handleFindMore} className="btn-secondary text-white">
               <Plus className="mr-2 h-4 w-4" />
               Find More Recipes
             </Button>
+            {user && (
+              <div className="mt-6">
+                <Link href="/saved">
+                  <Button variant="outline" className="btn-primary text-white">
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    View My Saved Recipes
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         </main>
 
@@ -290,6 +300,25 @@ export default function Home() {
               We'll create personalized recipes just for you. Or click "Surprise Me!" for an amazing chef's choice recipe.
             </p>
           </div>
+          
+          {/* Saved Recipes Callout for logged in users */}
+          {user && (
+            <div className="glass-card rounded-xl p-6 max-w-md mx-auto mb-8">
+              <div className="flex items-center justify-center mb-3">
+                <BookOpen className="text-primary mr-2 h-5 w-5" />
+                <h3 className="text-lg font-semibold text-foreground">Your Recipe Collection</h3>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Save your favorite recipes to build your personal collection
+              </p>
+              <Link href="/saved">
+                <Button variant="outline" size="sm" className="w-full">
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  View My Saved Recipes
+                </Button>
+              </Link>
+            </div>
+          )}
         </section>
 
         {/* Recipe Form */}
