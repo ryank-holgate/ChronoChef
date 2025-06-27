@@ -24,21 +24,18 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table (required for Replit Auth)
+// User storage table
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().notNull(),
-  email: varchar("email").unique(),
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
-  profileImageUrl: varchar("profile_image_url"),
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).unique().notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Saved recipes table
 export const savedRecipes = pgTable("saved_recipes", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id),
+  userId: integer("user_id").references(() => users.id),
   recipeName: text("recipe_name").notNull(),
   recipeDescription: text("recipe_description").notNull(),
   cookTime: text("cook_time").notNull(),
@@ -47,7 +44,12 @@ export const savedRecipes = pgTable("saved_recipes", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export type UpsertUser = typeof users.$inferInsert;
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
 // Saved recipe schemas

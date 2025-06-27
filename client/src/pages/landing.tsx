@@ -1,7 +1,89 @@
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Utensils, Clock, Carrot, Heart, Sparkles, BookOpen } from "lucide-react";
+import { type User } from "@shared/schema";
 
 export default function Landing() {
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [showAuth, setShowAuth] = useState(false);
+  const { toast } = useToast();
+
+  const signUpMutation = useMutation({
+    mutationFn: async (data: { name: string; email: string }) => {
+      const res = await apiRequest("POST", "/api/signup", data);
+      return await res.json() as User;
+    },
+    onSuccess: (user) => {
+      queryClient.setQueryData(["/api/user"], user);
+      toast({
+        title: "Welcome to ChronoChef!",
+        description: "Your account has been created successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Sign up failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const signInMutation = useMutation({
+    mutationFn: async (data: { email: string }) => {
+      const res = await apiRequest("POST", "/api/signin", data);
+      return await res.json() as User;
+    },
+    onSuccess: (user) => {
+      queryClient.setQueryData(["/api/user"], user);
+      toast({
+        title: "Welcome back!",
+        description: "You've been signed in successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Sign in failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isSignUp) {
+      if (!name) {
+        toast({
+          title: "Name required",
+          description: "Please enter your name.",
+          variant: "destructive",
+        });
+        return;
+      }
+      signUpMutation.mutate({ name, email });
+    } else {
+      signInMutation.mutate({ email });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-dark">
       {/* Header */}
@@ -15,7 +97,7 @@ export default function Landing() {
               <h1 className="text-2xl font-bold text-foreground">ChronoChef</h1>
             </div>
             <Button 
-              onClick={() => window.location.href = "/api/login"}
+              onClick={() => setShowAuth(true)}
               className="btn-primary text-white"
             >
               Sign In
@@ -36,7 +118,7 @@ export default function Landing() {
               Tell us your time, ingredients, and mood - we'll create the perfect meal for you.
             </p>
             <Button 
-              onClick={() => window.location.href = "/api/login"}
+              onClick={() => setShowAuth(true)}
               className="btn-primary text-white px-8 py-4 text-lg"
             >
               Get Started Free
@@ -136,14 +218,14 @@ export default function Landing() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              onClick={() => window.location.href = "/api/login"}
+              onClick={() => setShowAuth(true)}
               className="btn-primary text-white px-8 py-4 text-lg"
             >
               <Utensils className="mr-2 h-5 w-5" />
               Start Cooking Now
             </Button>
             <Button 
-              onClick={() => window.location.href = "/api/login"}
+              onClick={() => setShowAuth(true)}
               className="btn-secondary text-white px-8 py-4 text-lg"
             >
               <Sparkles className="mr-2 h-5 w-5" />
@@ -151,6 +233,88 @@ export default function Landing() {
             </Button>
           </div>
         </section>
+
+        {/* Authentication Modal */}
+        {showAuth && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <Card className="w-full max-w-md bg-slate-800/95 backdrop-blur-xl border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white text-center">
+                  {isSignUp ? "Create Account" : "Welcome Back"}
+                </CardTitle>
+                <CardDescription className="text-slate-300 text-center">
+                  {isSignUp 
+                    ? "Sign up with your name and email to get started" 
+                    : "Enter your email to continue"
+                  }
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {isSignUp && (
+                    <div>
+                      <Label htmlFor="name" className="text-slate-200">Name</Label>
+                      <Input
+                        id="name"
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Enter your name"
+                        className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400"
+                        required={isSignUp}
+                      />
+                    </div>
+                  )}
+                  <div>
+                    <Label htmlFor="email" className="text-slate-200">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your email"
+                      className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400"
+                      required
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      type="submit"
+                      disabled={signUpMutation.isPending || signInMutation.isPending}
+                      className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      {signUpMutation.isPending || signInMutation.isPending 
+                        ? "Please wait..." 
+                        : isSignUp ? "Create Account" : "Sign In"
+                      }
+                    </Button>
+                    <Button 
+                      type="button"
+                      onClick={() => setShowAuth(false)}
+                      variant="outline"
+                      className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+                
+                <div className="mt-4 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setIsSignUp(!isSignUp)}
+                    className="text-purple-400 hover:text-purple-300 text-sm transition-colors"
+                  >
+                    {isSignUp 
+                      ? "Already have an account? Sign in" 
+                      : "New to ChronoChef? Create account"
+                    }
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </main>
 
       {/* Footer */}

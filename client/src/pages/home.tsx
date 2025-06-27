@@ -239,15 +239,8 @@ export default function Home() {
             <div className="flex items-center space-x-4">
               {user && (
                 <div className="flex items-center space-x-2">
-                  {(user as any).profileImageUrl && (
-                    <img 
-                      src={(user as any).profileImageUrl} 
-                      alt="Profile" 
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                  )}
                   <span className="text-foreground">
-                    {(user as any).firstName || (user as any).email}
+                    Welcome, {(user as any).name}
                   </span>
                 </div>
               )}
@@ -259,7 +252,13 @@ export default function Home() {
               </Link>
               <Button 
                 variant="ghost" 
-                onClick={() => window.location.href = "/api/logout"}
+                onClick={() => {
+                  fetch("/api/signout", { method: "POST" })
+                    .then(() => {
+                      queryClient.setQueryData(["/api/user"], null);
+                      window.location.reload();
+                    });
+                }}
                 className="text-foreground hover:text-primary transition-colors duration-300"
               >
                 Sign Out

@@ -2,43 +2,42 @@ import {
   users, 
   savedRecipes, 
   type User, 
-  type UpsertUser, 
+  type InsertUser, 
   type SavedRecipe, 
   type InsertSavedRecipe 
 } from "@shared/schema";
 
 // Interface for storage operations
 export interface IStorage {
-  // User operations (required for Replit Auth)
-  getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
+  // User operations
+  getUser(id: number): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
   // Recipe operations
   saveRecipe(recipe: InsertSavedRecipe): Promise<SavedRecipe>;
-  getSavedRecipes(userId: string): Promise<SavedRecipe[]>;
-  deleteSavedRecipe(id: number, userId: string): Promise<void>;
+  getSavedRecipes(userId: number): Promise<SavedRecipe[]>;
+  deleteSavedRecipe(id: number, userId: number): Promise<void>;
 }
 
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
 
 export class DatabaseStorage implements IStorage {
-  // User operations (required for Replit Auth)
-  async getUser(id: string): Promise<User | undefined> {
+  // User operations
+  async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(userData: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
       .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
       .returning();
     return user;
   }
@@ -52,11 +51,11 @@ export class DatabaseStorage implements IStorage {
     return savedRecipe;
   }
 
-  async getSavedRecipes(userId: string): Promise<SavedRecipe[]> {
+  async getSavedRecipes(userId: number): Promise<SavedRecipe[]> {
     return await db.select().from(savedRecipes).where(eq(savedRecipes.userId, userId));
   }
 
-  async deleteSavedRecipe(id: number, userId: string): Promise<void> {
+  async deleteSavedRecipe(id: number, userId: number): Promise<void> {
     await db.delete(savedRecipes)
       .where(and(eq(savedRecipes.id, id), eq(savedRecipes.userId, userId)));
   }
