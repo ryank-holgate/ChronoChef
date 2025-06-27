@@ -3,8 +3,23 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { recipeRequestSchema, insertSavedRecipeSchema } from "@shared/schema";
 import { generateRecipes } from "./services/gemini";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Auth middleware
+  await setupAuth(app);
+
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
   // Recipe generation endpoint
   app.post("/api/recipes/generate", async (req, res) => {
     try {
@@ -45,10 +60,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Save recipe endpoint
-  app.post("/api/recipes/save", async (req, res) => {
+  // Save recipe endpoint (protected)
+  app.post("/api/recipes/save", isAuthenticated, async (req: any, res) => {
     try {
-      const validatedRecipe = insertSavedRecipeSchema.parse(req.body);
+      const userId = req.user.claims.sub;
+      
+      // Validate request body and add userId
+      const validatedRecipe = insertSavedRecipeSchema.parse({
+        ...req.body,
+        userId
+      });
+      
       const savedRecipe = await storage.saveRecipe(validatedRecipe);
       res.json(savedRecipe);
     } catch (error) {
@@ -65,14 +87,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get saved recipes endpoint
-  app.get("/api/recipes/saved/:userId", async (req, res) => {
+  // Get saved recipes endpoint (protected)
+  app.get("/api/recipes/saved", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = parseInt(req.params.userId);
-      if (isNaN(userId)) {
-        return res.status(400).json({ message: "Invalid user ID" });
-      }
-      
+      const userId = req.user.claims.sub;
       const savedRecipes = await storage.getSavedRecipes(userId);
       res.json(savedRecipes);
     } catch (error) {
@@ -83,14 +101,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete saved recipe endpoint
-  app.delete("/api/recipes/saved/:id/:userId", async (req, res) => {
+  // Delete saved recipe endpoint (protected)
+  app.delete("/api/recipes/saved/:id", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      const userId = parseInt(req.params.userId);
+      const userId = req.user.claims.sub;
       
-      if (isNaN(id) || isNaN(userId)) {
-        return res.status(400).json({ message: "Invalid ID parameters" });
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid recipe ID" });
       }
       
       await storage.deleteSavedRecipe(id, userId);

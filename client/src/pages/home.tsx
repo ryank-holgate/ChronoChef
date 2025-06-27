@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { recipeRequestSchema, type RecipeRequest, type RecipeResponse, type Recipe } from "@shared/schema";
 import { Clock, Carrot, Heart, Utensils, Search, Plus, Loader2, BookOpen, Sparkles } from "lucide-react";
@@ -18,6 +19,7 @@ export default function Home() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [showResults, setShowResults] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const form = useForm<RecipeRequest>({
     resolver: zodResolver(recipeRequestSchema),
@@ -234,12 +236,35 @@ export default function Home() {
               </div>
               <h1 className="text-2xl font-bold text-foreground">ChronoChef</h1>
             </div>
-            <Link href="/saved">
-              <Button variant="ghost" className="text-foreground hover:text-primary transition-colors duration-300">
-                <BookOpen className="mr-2 h-4 w-4" />
-                My Recipes
+            <div className="flex items-center space-x-4">
+              {user && (
+                <div className="flex items-center space-x-2">
+                  {(user as any).profileImageUrl && (
+                    <img 
+                      src={(user as any).profileImageUrl} 
+                      alt="Profile" 
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  )}
+                  <span className="text-foreground">
+                    {(user as any).firstName || (user as any).email}
+                  </span>
+                </div>
+              )}
+              <Link href="/saved">
+                <Button variant="ghost" className="text-foreground hover:text-primary transition-colors duration-300">
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  My Recipes
+                </Button>
+              </Link>
+              <Button 
+                variant="ghost" 
+                onClick={() => window.location.href = "/api/logout"}
+                className="text-foreground hover:text-primary transition-colors duration-300"
+              >
+                Sign Out
               </Button>
-            </Link>
+            </div>
           </div>
         </div>
       </header>
