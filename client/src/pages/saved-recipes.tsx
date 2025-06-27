@@ -3,35 +3,32 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { type SavedRecipe } from "@shared/schema";
-import { Clock, Utensils, Trash2, ArrowLeft, BookOpen } from "lucide-react";
+import { Clock, Utensils, Trash2, ArrowLeft, BookOpen, LogOut } from "lucide-react";
 
 export default function SavedRecipes() {
   const { toast } = useToast();
-
-  // For demo purposes, using userId = 1. In a real app, this would come from authentication
-  const userId = 1;
+  const { user, logoutMutation } = useAuth();
 
   const { data: savedRecipes = [], isLoading } = useQuery({
-    queryKey: ["/api/recipes/saved", userId],
+    queryKey: ["/api/recipes/saved"],
     queryFn: async () => {
-      const response = await fetch(`/api/recipes/saved/${userId}`);
+      const response = await fetch("/api/recipes/saved", {
+        credentials: 'include'
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch saved recipes");
       }
       return await response.json() as SavedRecipe[];
     },
+    enabled: !!user,
   });
 
   const deleteRecipeMutation = useMutation({
     mutationFn: async (recipeId: number) => {
-      const response = await fetch(`/api/recipes/saved/${recipeId}/${userId}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) {
-        throw new Error("Failed to delete recipe");
-      }
+      const response = await apiRequest("DELETE", `/api/recipes/saved/${recipeId}`);
       return await response.json();
     },
     onSuccess: () => {
@@ -39,7 +36,7 @@ export default function SavedRecipes() {
         title: "Recipe Deleted",
         description: "The recipe has been removed from your collection.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/recipes/saved", userId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/recipes/saved"] });
     },
     onError: (error) => {
       console.error("Delete recipe failed:", error);
@@ -68,6 +65,18 @@ export default function SavedRecipes() {
                 <Utensils className="text-dark-slate text-lg" />
               </div>
               <h1 className="text-2xl font-bold text-foreground">ChronoChef</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <span className="text-muted-foreground text-sm">Welcome, {user?.username}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => logoutMutation.mutate()}
+                disabled={logoutMutation.isPending}
+                className="text-muted-foreground hover:text-destructive transition-colors duration-300"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>
@@ -160,7 +169,7 @@ export default function SavedRecipes() {
                     </div>
                     
                     <div className="text-xs text-muted-foreground/70 mt-4">
-                      Saved on {new Date(recipe.createdAt).toLocaleDateString()}
+                      Saved on {recipe.createdAt ? new Date(recipe.createdAt.toString()).toLocaleDateString() : 'Unknown date'}
                     </div>
                   </div>
                 </div>

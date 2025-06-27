@@ -10,14 +10,53 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { recipeRequestSchema, type RecipeRequest, type RecipeResponse, type Recipe } from "@shared/schema";
-import { Clock, Carrot, Heart, Utensils, Search, Plus, Loader2, BookOpen, Sparkles } from "lucide-react";
+import { Clock, Carrot, Heart, Utensils, Search, Plus, Loader2, BookOpen, Sparkles, LogOut, User } from "lucide-react";
+
+// Header actions component for authentication
+function HeaderActions() {
+  const { user, logoutMutation } = useAuth();
+
+  if (!user) {
+    return (
+      <Link href="/auth">
+        <Button variant="ghost" className="text-foreground hover:text-primary transition-colors duration-300">
+          <User className="mr-2 h-4 w-4" />
+          Sign In
+        </Button>
+      </Link>
+    );
+  }
+
+  return (
+    <div className="flex items-center space-x-4">
+      <Link href="/saved">
+        <Button variant="ghost" className="text-foreground hover:text-primary transition-colors duration-300">
+          <BookOpen className="mr-2 h-4 w-4" />
+          My Recipes
+        </Button>
+      </Link>
+      <span className="text-muted-foreground text-sm">Welcome, {user.username}</span>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => logoutMutation.mutate()}
+        disabled={logoutMutation.isPending}
+        className="text-muted-foreground hover:text-destructive transition-colors duration-300"
+      >
+        <LogOut className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
 
 export default function Home() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [showResults, setShowResults] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const form = useForm<RecipeRequest>({
     resolver: zodResolver(recipeRequestSchema),
@@ -234,12 +273,7 @@ export default function Home() {
               </div>
               <h1 className="text-2xl font-bold text-foreground">ChronoChef</h1>
             </div>
-            <Link href="/saved">
-              <Button variant="ghost" className="text-foreground hover:text-primary transition-colors duration-300">
-                <BookOpen className="mr-2 h-4 w-4" />
-                My Recipes
-              </Button>
-            </Link>
+            <HeaderActions />
           </div>
         </div>
       </header>

@@ -3,8 +3,19 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { recipeRequestSchema, insertSavedRecipeSchema } from "@shared/schema";
 import { generateRecipes } from "./services/gemini";
+import { setupAuth } from "./auth";
+
+// Authentication middleware
+function requireAuth(req: any, res: any, next: any) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+  next();
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication
+  setupAuth(app);
   // Recipe generation endpoint
   app.post("/api/recipes/generate", async (req, res) => {
     try {
@@ -45,10 +56,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Save recipe endpoint
-  app.post("/api/recipes/save", async (req, res) => {
+  // Save recipe endpoint (requires auth)
+  app.post("/api/recipes/save", requireAuth, async (req: any, res) => {
     try {
-      const validatedRecipe = insertSavedRecipeSchema.parse(req.body);
+      const validatedRecipe = insertSavedRecipeSchema.parse({
+        ...req.body,
+        userId: req.user.id
+      });
       const savedRecipe = await storage.saveRecipe(validatedRecipe);
       res.json(savedRecipe);
     } catch (error) {
@@ -65,15 +79,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get saved recipes endpoint
-  app.get("/api/recipes/saved/:userId", async (req, res) => {
+  // Get saved recipes endpoint (requires auth)
+  app.get("/api/recipes/saved", requireAuth, async (req: any, res) => {
     try {
-      const userId = parseInt(req.params.userId);
-      if (isNaN(userId)) {
-        return res.status(400).json({ message: "Invalid user ID" });
-      }
-      
-      const savedRecipes = await storage.getSavedRecipes(userId);
+      const savedRecipes = await storage.getSavedRecipes(req.user.id);
       res.json(savedRecipes);
     } catch (error) {
       console.error("Get saved recipes error:", error);
@@ -83,17 +92,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete saved recipe endpoint
-  app.delete("/api/recipes/saved/:id/:userId", async (req, res) => {
+  // Delete saved recipe endpoint (requires auth)
+  app.delete("/api/recipes/saved/:id", requireAuth, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      const userId = parseInt(req.params.userId);
       
-      if (isNaN(id) || isNaN(userId)) {
-        return res.status(400).json({ message: "Invalid ID parameters" });
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid recipe ID" });
       }
       
-      await storage.deleteSavedRecipe(id, userId);
+      await storage.deleteSavedRecipe(id, req.user.id);
       res.json({ message: "Recipe deleted successfully" });
     } catch (error) {
       console.error("Delete recipe error:", error);
