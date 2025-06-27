@@ -105,6 +105,12 @@ Changelog:
 - June 26, 2025. Implemented sophisticated dark theme with glassmorphism effects
 - June 26, 2025. Fixed button text visibility issues in dark theme
 - June 26, 2025. Created comprehensive README.md documentation
+- June 27, 2025. Implemented complete email/password authentication system
+- June 27, 2025. Added user registration and login with secure password hashing
+- June 27, 2025. Implemented user recipe management with category organization
+- June 27, 2025. Added ability for users to add their own recipes via copy/paste
+- June 27, 2025. Enhanced saved recipes page with category filtering and tabs
+- June 27, 2025. Integrated user-added and AI-generated recipes in unified collection
 ```
 
 ## User Preferences

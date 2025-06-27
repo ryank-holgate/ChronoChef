@@ -82,12 +82,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get saved recipes endpoint (requires auth)
   app.get("/api/recipes/saved", requireAuth, async (req: any, res) => {
     try {
-      const savedRecipes = await storage.getSavedRecipes(req.user.id);
+      const category = req.query.category as string;
+      const savedRecipes = category 
+        ? await storage.getSavedRecipesByCategory(req.user.id, category)
+        : await storage.getSavedRecipes(req.user.id);
       res.json(savedRecipes);
     } catch (error) {
       console.error("Get saved recipes error:", error);
       res.status(500).json({ 
         message: "Failed to retrieve saved recipes" 
+      });
+    }
+  });
+
+  // Add user recipe endpoint (requires auth)
+  app.post("/api/recipes/add", requireAuth, async (req: any, res) => {
+    try {
+      const { recipeName, recipeDescription, cookTime, ingredients, instructions, category } = req.body;
+      
+      // Parse ingredients and instructions from text to arrays
+      const ingredientsList = ingredients.split('\n').filter((item: string) => item.trim().length > 0);
+      const instructionsList = instructions.split('\n').filter((item: string) => item.trim().length > 0);
+      
+      const recipeData = {
+        userId: req.user.id,
+        recipeName,
+        recipeDescription,
+        cookTime,
+        ingredients: ingredientsList,
+        instructions: instructionsList,
+        category: category || "main-entrees",
+        source: "user-added"
+      };
+      
+      const savedRecipe = await storage.addUserRecipe(recipeData);
+      res.json(savedRecipe);
+    } catch (error) {
+      console.error("Add user recipe error:", error);
+      res.status(500).json({ 
+        message: "Failed to add recipe" 
       });
     }
   });

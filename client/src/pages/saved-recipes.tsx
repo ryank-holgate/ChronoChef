@@ -1,196 +1,282 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { type SavedRecipe } from "@shared/schema";
-import { Clock, Utensils, Trash2, ArrowLeft, BookOpen, LogOut } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { type SavedRecipe, RECIPE_CATEGORIES } from "@shared/schema";
+import { Utensils, Clock, Trash2, ArrowLeft, BookOpen, LogOut, Plus, ChefHat, Sparkles } from "lucide-react";
+
+function HeaderActions() {
+  const { user, logoutMutation } = useAuth();
+
+  return (
+    <div className="flex items-center space-x-4">
+      <span className="text-muted-foreground text-sm">Welcome, {user?.username}</span>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => logoutMutation.mutate()}
+        disabled={logoutMutation.isPending}
+        className="text-muted-foreground hover:text-destructive transition-colors duration-300"
+      >
+        <LogOut className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
 
 export default function SavedRecipes() {
   const { toast } = useToast();
-  const { user, logoutMutation } = useAuth();
+  const { user } = useAuth();
+  const [activeCategory, setActiveCategory] = useState<string>("all");
 
   const { data: savedRecipes = [], isLoading } = useQuery({
-    queryKey: ["/api/recipes/saved"],
+    queryKey: ["/api/recipes/saved", activeCategory],
     queryFn: async () => {
-      const response = await fetch("/api/recipes/saved", {
+      const url = activeCategory === "all" 
+        ? "/api/recipes/saved" 
+        : `/api/recipes/saved?category=${activeCategory}`;
+      const response = await fetch(url, {
         credentials: 'include'
       });
       if (!response.ok) {
-        throw new Error("Failed to fetch saved recipes");
+        throw new Error('Failed to fetch saved recipes');
       }
-      return await response.json() as SavedRecipe[];
+      return response.json() as Promise<SavedRecipe[]>;
     },
-    enabled: !!user,
   });
 
   const deleteRecipeMutation = useMutation({
-    mutationFn: async (recipeId: number) => {
-      const response = await apiRequest("DELETE", `/api/recipes/saved/${recipeId}`);
-      return await response.json();
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/recipes/saved/${id}`);
     },
     onSuccess: () => {
       toast({
         title: "Recipe Deleted",
-        description: "The recipe has been removed from your collection.",
+        description: "Recipe has been removed from your collection.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/recipes/saved"] });
     },
     onError: (error) => {
-      console.error("Delete recipe failed:", error);
+      console.error("Delete failed:", error);
       toast({
-        title: "Delete Failed",
-        description: "Could not delete the recipe. Please try again.",
+        title: "Failed to Delete Recipe",
+        description: error instanceof Error ? error.message : "Please try again.",
         variant: "destructive",
       });
     },
   });
 
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-dark flex items-center justify-center">
+        <Card className="glass-card p-8 text-center">
+          <h2 className="text-2xl font-bold text-foreground mb-4">Sign in Required</h2>
+          <p className="text-muted-foreground mb-6">You need to be signed in to view your saved recipes.</p>
+          <Link href="/auth">
+            <Button className="btn-primary text-white">Sign In</Button>
+          </Link>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-dark flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your recipes...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Group recipes by category
+  const groupedRecipes = savedRecipes.reduce((acc, recipe) => {
+    const category = recipe.category || "main-entrees";
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(recipe);
+    return acc;
+  }, {} as Record<string, SavedRecipe[]>);
+
+  // Get recipe count by category
+  const categorycounts = Object.entries(RECIPE_CATEGORIES).map(([key, label]) => ({
+    key,
+    label,
+    count: groupedRecipes[key]?.length || 0
+  }));
+
+  const totalRecipes = savedRecipes.length;
+
   return (
     <div className="min-h-screen bg-gradient-dark">
       {/* Header */}
       <header className="glass sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+        <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/">
-              <Button variant="ghost" size="sm" className="text-foreground hover:text-primary transition-colors duration-300">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Recipe Generator
-              </Button>
-            </Link>
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center animate-glow">
                 <Utensils className="text-dark-slate text-lg" />
               </div>
               <h1 className="text-2xl font-bold text-foreground">ChronoChef</h1>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-muted-foreground text-sm">Welcome, {user?.username}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => logoutMutation.mutate()}
-                disabled={logoutMutation.isPending}
-                className="text-muted-foreground hover:text-destructive transition-colors duration-300"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </div>
+            <HeaderActions />
           </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* Page Header */}
-        <div className="flex items-center justify-center mb-8">
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-4">
-              <BookOpen className="text-4xl text-primary mr-3" />
-              <h2 className="text-3xl font-bold text-foreground">Your Saved Recipes</h2>
-            </div>
-            <p className="text-muted-foreground">Your personal collection of favorite recipes</p>
-          </div>
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        {/* Navigation */}
+        <div className="flex items-center justify-between mb-8">
+          <Link href="/">
+            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Recipe Generator
+            </Button>
+          </Link>
+          
+          <Link href="/add-recipe">
+            <Button className="btn-primary text-white">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Your Recipe
+            </Button>
+          </Link>
         </div>
 
-        {/* Loading State */}
-        {isLoading && (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <p className="mt-4 text-muted-foreground">Loading your saved recipes...</p>
+        {/* Hero Section */}
+        <section className="text-center mb-12">
+          <div className="flex items-center justify-center mb-4">
+            <div className="w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center animate-glow">
+              <BookOpen className="text-dark-slate text-2xl" />
+            </div>
           </div>
-        )}
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            My Recipe Collection
+          </h2>
+          <p className="text-lg text-muted-foreground mb-6">
+            Your personal cookbook with {totalRecipes} saved recipe{totalRecipes !== 1 ? 's' : ''}
+          </p>
+          
+          {totalRecipes === 0 && (
+            <div className="glass-card rounded-xl p-8 max-w-md mx-auto">
+              <ChefHat className="text-primary w-12 h-12 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-foreground mb-2">Start Building Your Collection</h3>
+              <p className="text-muted-foreground mb-6">
+                Generate recipes with AI or add your own favorite recipes to get started.
+              </p>
+              <div className="flex gap-3 justify-center">
+                <Link href="/">
+                  <Button variant="outline" size="sm">
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Generate Recipes
+                  </Button>
+                </Link>
+                <Link href="/add-recipe">
+                  <Button size="sm" className="btn-primary text-white">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Recipe
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
+        </section>
 
-        {/* Empty State */}
-        {!isLoading && savedRecipes.length === 0 && (
-          <div className="text-center py-12">
-            <BookOpen className="text-6xl text-muted-foreground/30 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">No saved recipes yet</h3>
-            <p className="text-muted-foreground mb-6">Start by generating some recipes and saving your favorites!</p>
-            <Link href="/">
-              <Button className="btn-primary text-white">
-                <Utensils className="mr-2 h-4 w-4" />
-                Generate Recipes
-              </Button>
-            </Link>
-          </div>
-        )}
+        {totalRecipes > 0 && (
+          <>
+            {/* Category Tabs */}
+            <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-8">
+              <TabsList className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 bg-surface-elevated p-1 rounded-xl">
+                <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                  All ({totalRecipes})
+                </TabsTrigger>
+                {categorycounts.map(({ key, label, count }) => (
+                  <TabsTrigger
+                    key={key}
+                    value={key}
+                    className="data-[state=active]:bg-primary data-[state=active]:text-white text-xs"
+                    disabled={count === 0}
+                  >
+                    {label} ({count})
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
 
-        {/* Recipe List */}
-        {!isLoading && savedRecipes.length > 0 && (
-          <div className="grid gap-6">
-            {savedRecipes.map((recipe) => (
-              <Card key={recipe.id} className="glass-card rounded-2xl overflow-hidden transform hover:scale-105 transition-all duration-300">
-                <div className="md:flex">
-                  <div className="md:w-1/3">
-                    <div className="h-48 md:h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                      <Utensils className="text-4xl text-primary" />
-                    </div>
-                  </div>
-                  <div className="md:w-2/3 p-6">
+            {/* Recipe Grid */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {(activeCategory === "all" ? savedRecipes : (groupedRecipes[activeCategory] || [])).map((recipe) => (
+                <Card key={recipe.id} className="recipe-card glass-card rounded-xl overflow-hidden transform hover:scale-105 transition-all duration-300">
+                  <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
-                      <h4 className="text-xl font-bold text-foreground pr-4">{recipe.recipeName}</h4>
-                      <div className="flex items-center space-x-2">
-                        <div className="flex items-center text-sm text-muted-foreground">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="text-lg font-bold text-foreground line-clamp-1">{recipe.recipeName}</h4>
+                          <Badge 
+                            variant="secondary" 
+                            className={`text-xs ${recipe.source === 'user-added' ? 'bg-secondary/20 text-secondary' : 'bg-primary/20 text-primary'}`}
+                          >
+                            {recipe.source === 'user-added' ? (
+                              <><ChefHat className="w-3 h-3 mr-1" /> My Recipe</>
+                            ) : (
+                              <><Sparkles className="w-3 h-3 mr-1" /> AI Generated</>
+                            )}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center text-sm text-muted-foreground mb-3">
                           <Clock className="mr-1 h-4 w-4" />
                           <span>{recipe.cookTime}</span>
+                          <span className="mx-2">•</span>
+                          <Badge variant="outline" className="text-xs">
+                            {RECIPE_CATEGORIES[recipe.category as keyof typeof RECIPE_CATEGORIES] || "Main Entrees"}
+                          </Badge>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteRecipeMutation.mutate(recipe.id)}
-                          disabled={deleteRecipeMutation.isPending}
-                          className="text-destructive hover:text-destructive/80 hover:bg-destructive/10 p-1 h-auto"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
                       </div>
                     </div>
                     
-                    <p className="text-muted-foreground mb-4">{recipe.recipeDescription}</p>
+                    <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{recipe.recipeDescription}</p>
                     
                     <div className="mb-4">
-                      <h5 className="font-semibold text-foreground mb-2">Ingredients:</h5>
-                      <ul className="text-sm text-muted-foreground space-y-1">
-                        {recipe.ingredients.map((ingredient, idx) => (
-                          <li key={idx}>• {ingredient}</li>
+                      <h5 className="font-semibold text-foreground mb-2 text-sm">Ingredients:</h5>
+                      <ul className="text-xs text-muted-foreground space-y-1 max-h-20 overflow-hidden">
+                        {recipe.ingredients.slice(0, 3).map((ingredient, idx) => (
+                          <li key={idx} className="line-clamp-1">• {ingredient}</li>
                         ))}
+                        {recipe.ingredients.length > 3 && (
+                          <li className="text-primary font-medium">+ {recipe.ingredients.length - 3} more</li>
+                        )}
                       </ul>
                     </div>
                     
-                    <div className="mb-4">
-                      <h5 className="font-semibold text-foreground mb-2">Instructions:</h5>
-                      <ol className="text-sm text-muted-foreground space-y-1">
-                        {recipe.instructions.map((step, idx) => (
-                          <li key={idx}>{idx + 1}. {step}</li>
-                        ))}
-                      </ol>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        Added {new Date(recipe.createdAt!).toLocaleDateString()}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteRecipeMutation.mutate(recipe.id)}
+                        disabled={deleteRecipeMutation.isPending}
+                        className="text-destructive hover:text-destructive/80 hover:bg-destructive/10 p-1 h-auto"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                    
-                    <div className="text-xs text-muted-foreground/70 mt-4">
-                      Saved on {recipe.createdAt ? new Date(recipe.createdAt.toString()).toLocaleDateString() : 'Unknown date'}
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </>
         )}
       </main>
-
-      {/* Footer */}
-      <footer className="bg-surface-elevated border-t border-border py-8 mt-16">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="w-8 h-8 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
-              <Utensils className="text-dark-slate text-sm" />
-            </div>
-            <span className="text-lg font-semibold text-foreground">ChronoChef</span>
-          </div>
-          <p className="text-muted-foreground">Discover your perfect recipe, one mood at a time.</p>
-        </div>
-      </footer>
     </div>
   );
 }

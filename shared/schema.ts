@@ -32,6 +32,8 @@ export const savedRecipes = pgTable("saved_recipes", {
   cookTime: text("cook_time").notNull(),
   ingredients: text("ingredients").array().notNull(),
   instructions: text("instructions").array().notNull(),
+  category: text("category").notNull().default("main-entrees"),
+  source: text("source").notNull().default("generated"), // "generated" or "user-added"
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -84,3 +86,27 @@ export const recipeResponseSchema = z.object({
 
 export type Recipe = z.infer<typeof recipeSchema>;
 export type RecipeResponse = z.infer<typeof recipeResponseSchema>;
+
+// User-added recipe schema
+export const userRecipeSchema = z.object({
+  recipeName: z.string().min(1, "Recipe name is required"),
+  recipeDescription: z.string().min(10, "Please provide a description (min 10 characters)"),
+  cookTime: z.string().min(1, "Cook time is required"),
+  ingredients: z.string().min(10, "Please provide ingredients (min 10 characters)"),
+  instructions: z.string().min(20, "Please provide instructions (min 20 characters)"),
+  category: z.enum(["appetizers", "main-entrees", "desserts", "bread", "soups", "salads", "beverages", "snacks"]).default("main-entrees"),
+});
+
+export type UserRecipe = z.infer<typeof userRecipeSchema>;
+
+// Recipe categories
+export const RECIPE_CATEGORIES = {
+  "appetizers": "Appetizers",
+  "main-entrees": "Main Entrees", 
+  "desserts": "Desserts",
+  "bread": "Bread & Baked Goods",
+  "soups": "Soups",
+  "salads": "Salads",
+  "beverages": "Beverages", 
+  "snacks": "Snacks"
+} as const;

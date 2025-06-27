@@ -121,14 +121,15 @@ export default function Home() {
 
   const saveRecipeMutation = useMutation({
     mutationFn: async (recipe: Recipe) => {
-      // For demo purposes, using userId = 1. In a real app, this would come from authentication
       const recipeData = {
-        userId: 1,
+        userId: user?.id || 1,
         recipeName: recipe.name,
         recipeDescription: recipe.description,
         cookTime: recipe.cookTime,
         ingredients: recipe.ingredients,
         instructions: recipe.instructions,
+        category: "main-entrees",
+        source: "generated"
       };
       const response = await apiRequest("POST", "/api/recipes/save", recipeData);
       return await response.json();

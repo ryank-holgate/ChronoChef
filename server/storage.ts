@@ -19,7 +19,9 @@ export interface IStorage {
   // Recipe operations
   saveRecipe(recipe: InsertSavedRecipe): Promise<SavedRecipe>;
   getSavedRecipes(userId: number): Promise<SavedRecipe[]>;
+  getSavedRecipesByCategory(userId: number, category?: string): Promise<SavedRecipe[]>;
   deleteSavedRecipe(id: number, userId: number): Promise<void>;
+  addUserRecipe(recipe: InsertSavedRecipe): Promise<SavedRecipe>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -60,13 +62,41 @@ export class DatabaseStorage implements IStorage {
     return db
       .select()
       .from(savedRecipes)
-      .where(eq(savedRecipes.userId, userId));
+      .where(eq(savedRecipes.userId, userId))
+      .orderBy(savedRecipes.createdAt);
+  }
+
+  async getSavedRecipesByCategory(userId: number, category?: string): Promise<SavedRecipe[]> {
+    if (category) {
+      return db
+        .select()
+        .from(savedRecipes)
+        .where(and(eq(savedRecipes.userId, userId), eq(savedRecipes.category, category)))
+        .orderBy(savedRecipes.createdAt);
+    }
+    
+    return db
+      .select()
+      .from(savedRecipes)
+      .where(eq(savedRecipes.userId, userId))
+      .orderBy(savedRecipes.createdAt);
   }
 
   async deleteSavedRecipe(id: number, userId: number): Promise<void> {
     await db
       .delete(savedRecipes)
       .where(and(eq(savedRecipes.id, id), eq(savedRecipes.userId, userId)));
+  }
+
+  async addUserRecipe(recipe: InsertSavedRecipe): Promise<SavedRecipe> {
+    const [savedRecipe] = await db
+      .insert(savedRecipes)
+      .values({
+        ...recipe,
+        source: "user-added"
+      })
+      .returning();
+    return savedRecipe;
   }
 }
 
